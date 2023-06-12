@@ -79,15 +79,25 @@ merged_data<-data.frame(d,merged_data)
 
 #estimating VARs------------------------------
 
-### VAR for Money Managers and Wheat###
-df_var_mm_w<-(data.frame(d,ind_prod_log_diff,exports_total_log_diff,netlong_mm_diff,p_wheat_log_diff))
+### VAR for Money Managers and Wheat Specifying dates###
 
-df_var_mm_w$d<- as.Date(df_var_mm_w$d, format = "%Y-%m-%d")
-start_date <- as.Date("2006-07-01")
-end_date <- as.Date("2012-07-01")
-df_var_mm_w_final <- df_var_mm_w %>% filter(d >= start_date & d<= end_date)
-is.na(df_var_mm_w_final)
-var_mm_w<- VAR(df_var_mm_w_final[,-1], lag.max = 10, ic = "AIC", type = "const")
+# df_var_mm_w<-(data.frame(d,ind_prod_log_diff,exports_total_log_diff,netlong_mm_diff,p_wheat_log_diff))
+# df_var_mm_w$d<- as.Date(df_var_mm_w$d, format = "%Y-%m-%d")
+# start_date <- as.Date("2006-07-01")
+# end_date <- as.Date("2012-07-01")
+# df_var_mm_w_final <- df_var_mm_w %>% filter(d >= start_date & d<= end_date)
+# is.na(df_var_mm_w_final)
+# var_mm_w<- VAR(df_var_mm_w_final[,-1], lag.max = 10, ic = "AIC", type = "const")
+# summary(var_mm_w)
+# coefficients <- coef(var_mm_w)
+# residuals <- resid(var_mm_w)
+# print(coefficients)
+
+### VAR for Money Managers and Wheat###
+
+df_var_mm_w<-(data.frame(ind_prod_log_diff,exports_total_log_diff,netlong_mm_diff,p_wheat_log_diff))
+is.na(df_var_mm_w)
+var_mm_w<-VAR(na.omit(df_var_mm_w), lag.max = 10, ic = "AIC", type = "const")
 summary(var_mm_w)
 coefficients <- coef(var_mm_w)
 residuals <- resid(var_mm_w)
@@ -105,13 +115,9 @@ plot(irf3, ylim = c(-0.1,0.1), main="Financial Shock", ylab="Price of Wheat")
 
 
 ##VAR for Swap Dealers and Wheat###
-df_var_sd_w<-(data.frame(d,ind_prod_log_diff,exports_total_log_diff,netlong_swap_diff,p_wheat_log_diff))
-df_var_sd_w$d<- as.Date(df_var_sd_w$d, format = "%Y-%m-%d")
-start_date <- as.Date("2006-07-01")
-end_date <- as.Date("2012-07-01")
-df_var_sd_w_final <- df_var_sd_w %>% filter(d >= start_date & d<= end_date)
-is.na(df_var_sd_w_final)
-var_sd_w<- VAR(df_var_sd_w_final[,-1], lag.max = 10, ic = "AIC", type = "const")
+df_var_sd_w<-(data.frame(ind_prod_log_diff,exports_total_log_diff,netlong_swap_diff,p_wheat_log_diff))
+is.na(df_var_sd_w)
+var_mm_w<-VAR(na.omit(df_var_sd_w), lag.max = 10, ic = "AIC", type = "const")
 summary(var_sd_w)
 coefficients <- coef(var_sd_w)
 residuals <- resid(var_sd_w)
