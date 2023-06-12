@@ -11,7 +11,8 @@ pacman::p_load(
   readxl,
   ggplot2,
   lubridate,
-  vars
+  vars,
+  dplyr
 )
 
 # Read in Data ------------------------------------------------------------
@@ -77,21 +78,14 @@ merged_data<-data.frame(d,merged_data)
 
 
 #estimating VARs------------------------------
-install.packages("vars")
-
-# Define bmat matrix 
-bmat <- matrix(0, nrow = 4, ncol = 4)
-bmat[lower.tri(bmat)] <- NA
-diag(bmat)<-NA
 
 ### VAR for Money Managers and Wheat###
 df_var_mm_w<-(data.frame(d,ind_prod_log_diff,exports_total_log_diff,netlong_mm_diff,p_wheat_log_diff))
-library(dplyr)
+
 df_var_mm_w$d<- as.Date(df_var_mm_w$d, format = "%Y-%m-%d")
 start_date <- as.Date("2006-07-01")
 end_date <- as.Date("2012-07-01")
 df_var_mm_w_final <- df_var_mm_w %>% filter(d >= start_date & d<= end_date)
-library(vars)
 is.na(df_var_mm_w_final)
 var_mm_w<- VAR(df_var_mm_w_final[,-1], lag.max = 10, ic = "AIC", type = "const")
 summary(var_mm_w)
@@ -112,12 +106,10 @@ plot(irf3, ylim = c(-0.1,0.1), main="Financial Shock", ylab="Price of Wheat")
 
 ##VAR for Swap Dealers and Wheat###
 df_var_sd_w<-(data.frame(d,ind_prod_log_diff,exports_total_log_diff,netlong_swap_diff,p_wheat_log_diff))
-library(dplyr)
 df_var_sd_w$d<- as.Date(df_var_sd_w$d, format = "%Y-%m-%d")
 start_date <- as.Date("2006-07-01")
 end_date <- as.Date("2012-07-01")
 df_var_sd_w_final <- df_var_sd_w %>% filter(d >= start_date & d<= end_date)
-library(vars)
 is.na(df_var_sd_w_final)
 var_sd_w<- VAR(df_var_sd_w_final[,-1], lag.max = 10, ic = "AIC", type = "const")
 summary(var_sd_w)
