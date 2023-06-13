@@ -64,14 +64,14 @@ reer_log<-log(data$reer)
 ind_prod_log_diff<-diff(log(data$ind_prod))
 sp_log_diff<-diff(log(data$sp))
 ir_log_diff<-diff(log(data$ir))
-cpi_log<-diff(log(data$cpi))
+cpi_log_diff<-diff(log(data$cpi))
 exports_total_log_diff<-diff(log(data$exports_total))
-netlong_mm_diff<-diff(data$netlong_mm)
-netlong_swap_diff<-diff(data$netlong_swap)
+netlong_mm <- data$netlong_mm[-1]
+netlong_swap<-data$netlong_swap[-1]
 reer_log<-reer_log[-1]
 merged_data<-data.frame(p_wheat_log_diff,p_oil_log_diff,reer_log,ind_prod_log_diff
-                   ,sp_log_diff,ir_log_diff,cpi_log,exports_total_log_diff,
-                   netlong_mm_diff,netlong_swap_diff)
+                   ,sp_log_diff,ir_log_diff,cpi_log_diff,exports_total_log_diff,
+                   netlong_mm,netlong_swap)
 
 d <- data$month[-1]
 merged_data<-data.frame(d,merged_data)
@@ -95,7 +95,7 @@ merged_data<-data.frame(d,merged_data)
 
 ### VAR for Money Managers and Wheat###
 
-df_var_mm_w<-(data.frame(ind_prod_log_diff,exports_total_log_diff,netlong_mm_diff,p_wheat_log_diff))
+df_var_mm_w<-(data.frame(ind_prod_log_diff,exports_total_log_diff,netlong_mm,p_wheat_log_diff))
 is.na(df_var_mm_w)
 var_mm_w<-VAR(na.omit(df_var_mm_w), lag.max = 10, ic = "AIC", type = "const")
 summary(var_mm_w)
@@ -110,14 +110,14 @@ irf1 <- irf(var_mm_w, impulse = "ind_prod_log_diff", response = "p_wheat_log_dif
 plot(irf1, ylim = c(-0.1,0.1), main="Demand Shock", ylab="Price of Wheat")
 irf2 <- irf(var_mm_w, impulse = "exports_total_log_diff", response = "p_wheat_log_diff", n.ahead = 10, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
 plot(irf2, ylim = c(-0.1,0.1), main="Supply Shock", ylab="Price of Wheat")
-irf3 <- irf(var_mm_w, impulse = "netlong_mm_diff", response = "p_wheat_log_diff", n.ahead = 10, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
-plot(irf3, ylim = c(-0.1,0.1), main="Financial Shock", ylab="Price of Wheat")
+irf3 <- irf(var_mm_w, impulse = "netlong_mm", response = "p_wheat_log_diff", n.ahead = 10, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
+plot(irf3, ylim = c(-0.1,0.1), main="Financial Shock (MM)", ylab="Price of Wheat")
 
 
 ##VAR for Swap Dealers and Wheat###
-df_var_sd_w<-(data.frame(ind_prod_log_diff,exports_total_log_diff,netlong_swap_diff,p_wheat_log_diff))
+df_var_sd_w<-(data.frame(ind_prod_log_diff,exports_total_log_diff,netlong_swap,p_wheat_log_diff))
 is.na(df_var_sd_w)
-var_mm_w<-VAR(na.omit(df_var_sd_w), lag.max = 10, ic = "AIC", type = "const")
+var_sd_w<-VAR(na.omit(df_var_sd_w), lag.max = 10, ic = "AIC", type = "const")
 summary(var_sd_w)
 coefficients <- coef(var_sd_w)
 residuals <- resid(var_sd_w)
@@ -130,8 +130,8 @@ irf4 <- irf(var_sd_w, impulse = "ind_prod_log_diff", response = "p_wheat_log_dif
 plot(irf4, ylim = c(-0.1,0.1), main="Demand Shock", ylab="Price of Wheat")
 irf5 <- irf(var_sd_w, impulse = "exports_total_log_diff", response = "p_wheat_log_diff", n.ahead = 10, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
 plot(irf5, ylim = c(-0.1,0.1), main="Supply Shock", ylab="Price of Wheat")
-irf6 <- irf(var_sd_w, impulse = "netlong_swap_diff", response = "p_wheat_log_diff", n.ahead = 10, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
-plot(irf6, ylim = c(-0.1,0.1), main="Financial Shock", ylab="Price of Wheat")
+irf6 <- irf(var_sd_w, impulse = "netlong_swap", response = "p_wheat_log_diff", n.ahead = 10, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
+plot(irf6, ylim = c(-0.1,0.1), main="Financial Shock (Swap)", ylab="Price of Wheat")
 
 
 ###forecast error variance decomposition
