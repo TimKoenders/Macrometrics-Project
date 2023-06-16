@@ -51,8 +51,8 @@ sp_log_diff<-diff(log(data$sp))
 ir_log_diff<-diff(log(data$ir))
 cpi_log_diff<-diff(log(data$cpi))
 exports_total_log_diff<-diff(log(data$exports_total))
-netlong_mm <- data$netlong_mm[-1]/1000000
-netlong_swap<-data$netlong_swap[-1]
+netlong_mm <- data$netlong_mm[-1]/1000000 # Dividing by 1 million to make numbers comparable
+netlong_swap<-data$netlong_swap[-1]/1000000 # otherwise there was an error 
 reer_log<-reer_log[-1]
 merged_data<-data.frame(p_wheat_log_diff,p_oil_log_diff,reer_log,ind_prod_log_diff
                         ,sp_log_diff,ir_log_diff,cpi_log_diff,exports_total_log_diff,
@@ -61,8 +61,10 @@ merged_data<-data.frame(p_wheat_log_diff,p_oil_log_diff,reer_log,ind_prod_log_di
 d <- data$month[-1]
 merged_data<-data.frame(d,merged_data)
 
-## Data for wheat --------------------------
-df_mm_w <- data.frame(merged_data[c(5,9,10,2)])
+## Data for wheat and money managers --------------------------
+# Needed time series: ind_prod, exports, netlong_mm, p_wheat
+# Selecting the needed time series in the correct order:
+df_mm_w <- data.frame(merged_data[c(5,9,10,2)]) 
 df_mm_w <- na.omit(df_mm_w)
 
 Traw <- nrow(df_mm_w)
