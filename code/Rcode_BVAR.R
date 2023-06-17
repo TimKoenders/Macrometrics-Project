@@ -425,6 +425,7 @@ for(ii in 4:4){ # Column 4 is price of wheat
 
 
 
+
 ######### CODE BELOW NOT (YET) RELEVANT #######################
 # Cholesky for all shocks on all variables ------------------------------------------
 par(mfrow=c(4,4),mar=c(4,4,2,2))
