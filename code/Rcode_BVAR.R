@@ -1,8 +1,8 @@
-rm(list=ls())
-
 ######### SET-UP #######################
 
 # Set-up / Loading packages --------------------------------------------
+rm(list=ls())
+
 pacman::p_load(
   tidyverse,
   urca,
@@ -53,8 +53,8 @@ sp_log_diff<-diff(log(data$sp))
 ir_log_diff<-diff(log(data$ir))
 cpi_log_diff<-diff(log(data$cpi))
 exports_total_log_diff<-diff(log(data$exports_total))
-netlong_mm <- data$netlong_mm[-1]/1000000 # Dividing by 1 million to make numbers comparable
-netlong_swap<-data$netlong_swap[-1]/1000000 # otherwise there was an error 
+netlong_mm <- data$netlong_mm[-1]/1000 # Dividing by 1000 to make numbers comparable
+netlong_swap<-data$netlong_swap[-1]/1000 # otherwise there was an error 
 reer_log<-reer_log[-1]
 merged_data<-data.frame(p_wheat_log_diff,p_oil_log_diff,reer_log,ind_prod_log_diff
                         ,sp_log_diff,ir_log_diff,cpi_log_diff,exports_total_log_diff,
@@ -66,9 +66,11 @@ merged_data<-data.frame(d,merged_data)
 
 
 
+
+
 ######### SELECT THE DATA FOR THE DESIRED VAR #######################
 
-## Data for wheat and money managers --------------------------
+# Data for wheat and money managers --------------------------
 # Needed time series: ind_prod, exports, netlong_mm, p_wheat
 # Selecting the needed time series in the correct order:
 df_mm_w <- data.frame(merged_data[c(5,9,10,2)]) 
@@ -79,7 +81,7 @@ Yraw <- df_mm_w
 
 plot.ts(Yraw)
 
-## Data for wheat and swap dealers --------------------------
+# Data for wheat and swap dealers --------------------------
 # Needed time series: ind_prod, exports, netlong_swap, p_wheat
 # selecting the needed time series in the correct order:
 df_mm_s <- data.frame(merged_data[c(5,9,11,2)]) 
@@ -88,6 +90,7 @@ df_mm_s <- na.omit(df_mm_s)
 Traw <- nrow (df_mm_s)
 Yraw <- df_mm_s
 plot.ts(Yraw)
+
 
 
 
@@ -395,10 +398,10 @@ IRFsign_median <- apply(IRFsign_store, c(2,3,4), median, na.rm=TRUE)
 
 
 
-######### PLOTTING OF THE IRFS (DEPENDED ON THE CHOSEN DATA!!) #######################
 
-# Start plotting the IRFs w.r.t. shocks ------------------------------------------
-## Cholesky for all demand, supply and financial shock on wheat price ------------------------------------------
+
+######### PLOTTING OF THE IRF'S (DEPENDED ON THE CHOSEN DATA!!) #######################
+# Plotting the IRF's on the wheat price using Cholesky  ------------------------------------------
 par(mfrow=c(3,1),mar=c(4,4,2,2))
 for(ii in 4:4){ # Column 4 is price of wheat
   for(jj in 1:(M-1)){ # in the first 3 columns (M-1) are the demand, supply and financial shock
@@ -416,9 +419,14 @@ for(ii in 4:4){ # Column 4 is price of wheat
 
 
 
-######### CODE BELOW NOT (YET) RELEVANT #######################
 
-## Cholesky for all shocks on all variables ------------------------------------------
+
+
+
+
+
+######### CODE BELOW NOT (YET) RELEVANT #######################
+# Cholesky for all shocks on all variables ------------------------------------------
 par(mfrow=c(4,4),mar=c(4,4,2,2))
 for(ii in 1:M){
   for(jj in 1:M){
@@ -434,7 +442,7 @@ for(ii in 1:M){
 }
 
 
- ## Sign restrictions for all shocks on all variables ------------------------------------------
+## Sign restrictions for all shocks on all variables ------------------------------------------
 par(mfrow=c(4,4))
 for(ii in 1:M){
   for(jj in 1:M){
