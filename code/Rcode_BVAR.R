@@ -3,6 +3,8 @@
 # Set-up / Loading packages --------------------------------------------
 rm(list=ls())
 
+
+
 pacman::p_load(
   tidyverse,
   urca,
@@ -68,11 +70,15 @@ merged_data<-data.frame(d,merged_data)
 
 
 
-######### SELECT THE DATA FOR THE DESIRED VAR #######################
+######### SELECT DESIRED VAR #######################
+
+type <- c("mm") # Choose this for Money Managers
+#type <- c("sd") # Choose this for Swap Dealers
 
 # Data for wheat and money managers --------------------------
 # Needed time series: ind_prod, exports, netlong_mm, p_wheat
 # Selecting the needed time series in the correct order:
+if(type == "mm") {
 df_mm_w <- data.frame(merged_data[c(5,9,10,2)]) 
 df_mm_w <- na.omit(df_mm_w)
 
@@ -80,17 +86,19 @@ Traw <- nrow(df_mm_w)
 Yraw <- df_mm_w
 
 plot.ts(Yraw)
-
+}
 # Data for wheat and swap dealers --------------------------
 # Needed time series: ind_prod, exports, netlong_swap, p_wheat
 # selecting the needed time series in the correct order:
-df_mm_s <- data.frame(merged_data[c(5,9,11,2)]) 
-df_mm_s <- na.omit(df_mm_s)
 
-Traw <- nrow (df_mm_s)
-Yraw <- df_mm_s
+if(type == "sd"){
+df_sd_w <- data.frame(merged_data[c(5,9,11,2)]) 
+df_sd_w <- na.omit(df_sd_w)
+
+Traw <- nrow (df_sd_w)
+Yraw <- df_sd_w
 plot.ts(Yraw)
-
+}
 
 
 
