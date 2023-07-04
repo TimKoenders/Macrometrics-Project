@@ -83,7 +83,7 @@ df_mm_w <- data.frame(merged_data[c(5,9,10,2)])
 df_mm_w <- na.omit(df_mm_w)
 
 Traw <- nrow(df_mm_w)
-Yraw <- df_mm_w
+Yraw <- df_mm_w 
 
 plot.ts(Yraw)
 }
