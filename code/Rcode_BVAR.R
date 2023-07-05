@@ -35,7 +35,7 @@ require(bvarsv)
 # Loading data --------------------------------------------
 
 data <- read_excel("./data/data_com_fin.xlsx") 
-
+data <- data_com_fin
 colnames(data)[2] <- "p_wheat" # Renaming wheat price and s&p
 colnames(data)[7] <- "sp"
 
@@ -142,7 +142,8 @@ k    <- ncol(X)           # number of parameters per equation
 v    <- M * (M - 1) / 2
 
 # Initial Values, OLS preliminaries, can also just take a draw from the prior distribution ----
-
+dim(X)
+dim(Y)
 A_OLS <- solve(crossprod(X)) %*% crossprod(X, Y)
 # A_OLS <- chol2inv(chol(crossprod(X)))%*%crossprod(X,Y) 
 # Cholesky to inverse saves computation time
@@ -395,7 +396,6 @@ IRFchol_median <- apply(IRFchol_store, c(2,3,4), median, na.rm=TRUE)
 IRFsign_low    <- apply(IRFsign_store, c(2,3,4), quantile, 0.16,na.rm=TRUE)
 IRFsign_high   <- apply(IRFsign_store, c(2,3,4), quantile, 0.84,na.rm=TRUE)
 IRFsign_median <- apply(IRFsign_store, c(2,3,4), median, na.rm=TRUE)
-
 
 
 
