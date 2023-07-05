@@ -11,7 +11,9 @@ pacman::p_load(
   ggplot2,
   lubridate,
   vars,
-  dplyr
+  dplyr,
+  OOS,
+  forecast
 )
 
 # Read Data ------------------------------------------------------------
@@ -87,7 +89,7 @@ print(coefficients)
 ##VAR for Swap Dealers
 df_var_sd<-(data.frame(ind_prod_log_diff,exports_total_log_diff,netlong_swap,p_wheat_log_diff))
 is.na(df_var_sd)
-var_sd_w<-VAR(na.omit(df_var_sd), lag.max = 10, ic = "AIC", type = "const")
+var_sd<-VAR(na.omit(df_var_sd), lag.max = 10, ic = "AIC", type = "const")
 summary(var_sd)
 coefficients <- coef(var_sd)
 residuals <- resid(var_sd)
@@ -100,9 +102,9 @@ print(coefficients)
 set.seed(123) # for reproducibility
 nboot <- 1000 # number of bootstrap replications
 
-irf1 <- irf(var_mm, impulse = "ind_prod_log_diff", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
-irf2 <- irf(var_mm, impulse = "exports_total_log_diff", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
-irf3 <- irf(var_mm, impulse = "netlong_mm", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
+irf1 <- vars::irf(var_mm, impulse = "ind_prod_log_diff", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
+irf2 <- vars::irf(var_mm, impulse = "exports_total_log_diff", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
+irf3 <- vars::irf(var_mm, impulse = "netlong_mm", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
 
 par(mfrow = c(3, 1), mar = c(2, 2, 2, 1))
 plot(irf1, ylim = c(-0.04, 0.04), main = "Shock ind_prod_log_diff on p_wheat_log_diff", ylab = "")
@@ -120,12 +122,12 @@ axis(1, at = seq(1, by = 2), labels = seq(0, by = 2))
 set.seed(123) # for reproducibility
 nboot <- 1000 # number of bootstrap replications
 
-irf4 <- irf(var_sd, impulse = "ind_prod_log_diff", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
-irf5 <- irf(var_sd, impulse = "exports_total_log_diff", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
-irf6 <- irf(var_sd, impulse = "netlong_swap", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
+irf4 <- vars::irf(var_sd, impulse = "ind_prod_log_diff", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
+irf5 <- vars::irf(var_sd, impulse = "exports_total_log_diff", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
+irf6 <- vars::irf(var_sd, impulse = "netlong_swap", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
 
 par(mfrow=c(3,1),mar=c(4,4,2,2))
-plot(irf4_ts, ylim = c(-0.04,0.04), main="ind_prod_log_diff on p_wheat_log_diff", ylab="")
+plot(irf4, ylim = c(-0.04,0.04), main="ind_prod_log_diff on p_wheat_log_diff", ylab="")
 abline(v = seq(1, by = 2), col = "lightgrey", lty = 2)
 axis(1, at = seq(1, by = 2), labels = seq(0, by = 2))
 plot(irf5, ylim = c(-0.04,0.03), main="exports_total_log_diff on p_wheat_log_diff", ylab="")
@@ -136,9 +138,9 @@ abline(v = seq(1, by = 2), col = "lightgrey", lty = 2)
 axis(1, at = seq(1, by = 2), labels = seq(0, by = 2))
 
 # FEVDs -----------------------------------
-fevd_mm<-fevd(var_mm)
+fevd_mm<-vars::fevd(var_mm)
 print(fevd_mm)
-fevd_sd<-fevd(var_sd)
+fevd_sd<-vars::fevd(var_sd)
 print(fevd_sd)
 
 
@@ -260,7 +262,6 @@ forecasts_var <- forecast_multivariate(
   freq = 12
 )
 
-?forecast_multivariate
 summary(forecasts_var)
 forecasted_values <- forecasts_var$forecast
 actual_values <- tail(subset_data$p_wheat_log_diff, 12)
@@ -271,20 +272,21 @@ print(rmse_var)
 accuracy_var <- accuracy(forecasts_var$forecast, actual_values)
 print(accuracy_var)
 
+par(mfrow=c(1,1))
 plot(actual_values, type = "l", col = "blue", ylim = range(c(actual_values, forecasted_values)),
-     xlab = "Time")
+     xlab = "Time", main="12 Month Wheat Price Forecast (VAR)")
 lines(forecasted_values, col = "red")
-legend("topright", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1)
+legend("topleft", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1)
 
 
-# Theil’s U-statistic -----------------------------------------------------
-rmse_proposed <- sqrt(mean((forecasted_values - actual_values)^2))
-rmse_naive <- sqrt(mean((actual_values - mean(actual_values))^2))
-U_var <- rmse_proposed / rmse_naive
-print(U_var)
-#Theil's U-statistic compares the RMSE of the proposed forecasting method 
-#(rmse_proposed) to the RMSE of the no-change model (rmse_naive).
-#The value of Theil's U-statistic is less than 1 indicating that the proposed 
-#forecasting model performs better than the no-change (naïve) model. 
+# # Theil’s U-statistic -----------------------------------------------------
+# rmse_proposed <- sqrt(mean((forecasted_values - actual_values)^2))
+# rmse_naive <- sqrt(mean((actual_values - mean(actual_values))^2))
+# U_var <- rmse_proposed / rmse_naive
+# print(U_var)
+# #Theil's U-statistic compares the RMSE of the proposed forecasting method 
+# #(rmse_proposed) to the RMSE of the no-change model (rmse_naive).
+# #The value of Theil's U-statistic is less than 1 indicating that the proposed 
+# #forecasting model performs better than the no-change (naïve) model. 
 
 

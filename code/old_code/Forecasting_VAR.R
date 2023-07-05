@@ -126,7 +126,7 @@ for (i in 1:length(lag_orders)) {
 
 
 # Forecasting -------------------------------------------------------------
-lag_order <- 10
+lag_order <- 7
 forecasts_var <- forecast_multivariate(
   Data = Yraw,
   forecast.dates = tail(subset_data$date, 12),
