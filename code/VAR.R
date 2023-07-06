@@ -152,10 +152,25 @@ print(fevd_sd)
 
 
 
+
 ##################### Forecasting VAR ######################
 
 # Loading data --------------------------------------------
 rm(list = ls())
+pacman::p_load(
+  tidyverse,
+  urca,
+  readxl,
+  ggplot2,
+  lubridate,
+  vars,
+  dplyr,
+  MCMCpack,
+  magic,
+  coda,
+  BVAR,
+  forecast,
+)
 data <- read_excel("./data/data_com_fin.xlsx") 
 
 colnames(data)[2] <- "p_wheat" # Renaming wheat price and s&p
@@ -186,10 +201,6 @@ merged_data<-data.frame(date,merged_data)
 subset_data <- merged_data[merged_data$date >= "2006-06-01" & merged_data$date <= "2012-07-01", ]
 
 
-
-
-
-
 # Selecting desired VAR #######################
 
 type <- c("mm") # Choose this for Money Managers
@@ -214,11 +225,12 @@ if(type == "sd"){
 
 
 # Selecting lag-order----------------------------------------------------
-lag_orders <- 0:9
+lag_orders <- 0:12
 rmse_values <- vector("numeric", length = length(lag_orders))
+aic_values <- vector("numeric", length = length(lag_orders))
+install.packages("")
 for (i in 1:length(lag_orders)) {
   lag_order <- lag_orders[i]
-  
   # Perform the forecast with the specific lag order
   forecasts_var <- forecast_multivariate(
     Data = Yraw,
@@ -238,15 +250,21 @@ for (i in 1:length(lag_orders)) {
   
   # Store the RMSE value in the vector
   rmse_values[i] <- rmse
+  
+  # Calculate the AIC value using the AIC() function
+  aic <- AIC(forecasts_var$model, n = length(actual_values))
+  
+  # Store the AIC value in the vector
+  aic_values[i] <- aic
 }
 
 # Print the summary of forecasts_var
 summary(forecasts_var)
 
-# Print the RMSE values
-cat("Root Mean Squared Error (RMSE) for different lag orders:\n")
+# Print the RMSE and AIC values
+cat("Lag Order\tRMSE\t\tAIC\n")
 for (i in 1:length(lag_orders)) {
-  cat("Lag Order", lag_orders[i], ": ", rmse_values[i], "\n")
+  cat(lag_orders[i], "\t\t", rmse_values[i], "\t", aic_values[i], "\n")
 }
 
 
