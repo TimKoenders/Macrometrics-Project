@@ -153,6 +153,8 @@ print(fevd_sd)
 
 
 
+
+
 ##################### Forecasting VAR ######################
 
 # Loading data --------------------------------------------
@@ -170,6 +172,8 @@ pacman::p_load(
   coda,
   BVAR,
   forecast,
+  vars,
+  OOS
 )
 data <- read_excel("./data/data_com_fin.xlsx") 
 
@@ -200,7 +204,6 @@ date <- data$month[-1]
 merged_data<-data.frame(date,merged_data)
 subset_data <- merged_data[merged_data$date >= "2006-06-01" & merged_data$date <= "2012-07-01", ]
 
-
 # Selecting desired VAR #######################
 
 type <- c("mm") # Choose this for Money Managers
@@ -210,6 +213,7 @@ if(type == "mm") {
   df <- na.omit(df)
   Traw <- nrow(df)
   Yraw <- df
+  VAR_data <- data.frame(subset_data[c(2,5,9,10)])
 }
 
 if(type == "sd"){
@@ -217,59 +221,16 @@ if(type == "sd"){
   df <- na.omit(df)
   Traw <- nrow (df)
   Yraw <- df
+  VAR_data <- data.frame(subset_data[c(2,5,9,11)])
 }
-
-
-
 
 
 
 # Selecting lag-order----------------------------------------------------
-lag_orders <- 0:12
-rmse_values <- vector("numeric", length = length(lag_orders))
-aic_values <- vector("numeric", length = length(lag_orders))
-install.packages("")
-for (i in 1:length(lag_orders)) {
-  lag_order <- lag_orders[i]
-  # Perform the forecast with the specific lag order
-  forecasts_var <- forecast_multivariate(
-    Data = Yraw,
-    forecast.dates = tail(Yraw$date, 12),
-    target = "p_wheat_log_diff",
-    horizon = 12,
-    method = "var",
-    lag.n = lag_order,
-    freq = 12
-  )
-  
-  # Calculate forecast errors and RMSE
-  forecasted_values <- forecasts_var$forecast
-  actual_values <- tail(Yraw$p_wheat_log_diff, 12)
-  forecast_errors <- forecasted_values - actual_values
-  rmse <- sqrt(mean(forecast_errors^2))
-  
-  # Store the RMSE value in the vector
-  rmse_values[i] <- rmse
-  
-  # Calculate the AIC value using the AIC() function
-  aic <- AIC(forecasts_var$model, n = length(actual_values))
-  
-  # Store the AIC value in the vector
-  aic_values[i] <- aic
-}
-
-# Print the summary of forecasts_var
-summary(forecasts_var)
-
-# Print the RMSE and AIC values
-cat("Lag Order\tRMSE\t\tAIC\n")
-for (i in 1:length(lag_orders)) {
-  cat(lag_orders[i], "\t\t", rmse_values[i], "\t", aic_values[i], "\n")
-}
-
-
+VARselect(VAR_data, lag.max = 12, type = c("const"))
+## The SC criterion is the BIC. 
 # Forecasting -------------------------------------------------------------
-lag_order <- 7
+lag_order <- 1
 forecasts_var <- forecast_multivariate(
   Data = Yraw,
   forecast.dates = tail(subset_data$date, 12),
@@ -295,6 +256,11 @@ plot(actual_values, type = "l", col = "blue", ylim = range(c(actual_values, fore
      xlab = "Time", main="12 Month Wheat Price Forecast (VAR)")
 lines(forecasted_values, col = "red")
 legend("topleft", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1)
+
+
+
+
+
 
 
 # # Theil’s U-statistic -----------------------------------------------------
