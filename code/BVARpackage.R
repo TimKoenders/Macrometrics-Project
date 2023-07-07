@@ -59,7 +59,7 @@ test_data <- subset_data[(nrow(subset_data) - 11):nrow(subset_data), ]
 
 # Selecting which BVAR to run -------------------------------------------
 mm <- T
-sd <- T
+sd <- F
 
 
 
@@ -80,13 +80,13 @@ plot(bvar_mm$irf,
      vars_impulse = c("ind_prod_log_diff","exports_total_log_diff","netlong_mm"),
      vars_response = "p_wheat_log_diff",
      mfcol=c(3,1))
-}
+
 
 # FEVDs -------------------------------------------------------------------
 set.seed(123)
 fevd <- fevd(bvar_mm)
 print(fevd$quants[, , , 4])
-
+}
 # Out-of-sample forecasts ---------------------------------------------------------------
 if (mm==T) {
     prior_settings <- bv_priors(hyper = "full")  ## now adjust prior settings
@@ -100,7 +100,7 @@ if (mm==T) {
                     irf = bv_irf(horizon = 12, fevd = TRUE, identification = TRUE, sign_restr = NULL, sign_lim = 1000),
                     fcast = NULL)
     df_mm_test <- data.frame(test_data[c(5,9,10,2)]) 
-    df_mm_test <- na.omit(df_mm)
+    df_mm_test <- na.omit(df_mm_test)
     forecasts <- predict(bvar_mm, bv_fcast(horizon = NROW(test_data), cond_path = NULL, cond_vars = NULL), conf_bands = 0.025, df_mm_test)
     par(mfrow=c(1,1))
     actual_values <- data.frame(df_mm_test[, 4])
@@ -108,7 +108,7 @@ if (mm==T) {
          ylim = c(-5, 5)) # Set the y-axis limits to -0.5 and 1
     lines(actual_values, col = "red")
     legend("topleft", legend = c("Predicted", "Actual"), col = c("lightblue", "red"), lty = 1)
-}
+
 # RMSE -------------------------------------------------
 rmse.bvar <- function(bvar_mm, test_data) {
   
@@ -123,7 +123,7 @@ rmse.bvar <- function(bvar_mm, test_data) {
 rmse_bvar <- rmse.bvar(bvar_mm)
 rmse_bvar <- rmse_bvar["p_wheat_log_diff"]
 list(rmse_bvar)
-
+}
 
 
 
@@ -143,16 +143,16 @@ if (sd==T) {
                   irf = bv_irf(horizon = 12, fevd = TRUE, identification = TRUE, sign_restr = NULL, sign_lim = 1000),
                   fcast = NULL)
   plot(bvar_sd$irf, 
-       vars_impulse = c("ind_prod_log_diff","exports_total_log_diff","netlong_sd"),
+       vars_impulse = c("ind_prod_log_diff","exports_total_log_diff","netlong_swap"),
        vars_response = "p_wheat_log_diff",
        mfcol=c(3,1))
-}
+
 
 # FEVDs -------------------------------------------------------------------
 set.seed(123)
 fevd <- fevd(bvar_sd)
 print(fevd$quants[, , , 4])
-
+}
 
 # Out-of-sample forecasts ---------------------------------------------------------------
 if (sd==T) {
@@ -167,17 +167,15 @@ if (sd==T) {
                   irf = bv_irf(horizon = 12, fevd = TRUE, identification = TRUE, sign_restr = NULL, sign_lim = 1000),
                   fcast = NULL)
   df_sd_test <- data.frame(test_data[c(5,9,11,2)]) 
-  df_sd_test <- na.omit(df_sd)
+  df_sd_test <- na.omit(df_sd_test)
   forecasts <- predict(bvar_sd, bv_fcast(horizon = NROW(test_data), cond_path = NULL, cond_vars = NULL), conf_bands = 0.025, df_sd_test)
   par(mfrow=c(1,1))
-  plot(predict(bvar_sd, horizon = NROW(test_data),conf_bands = 0.025), vars=4, col="lightblue") #confidence bands at 2.5% and 97.5%
-  lines(actual_values, col="red")
   actual_values <- data.frame(df_sd_test[, 4])
   plot(predict(bvar_sd, horizon = NROW(test_data), conf_bands = 0.025), vars = 4, col = "lightblue",
        ylim = c(-5, 5)) # Set the y-axis limits to -0.5 and 1
   lines(actual_values, col = "red")
   legend("topleft", legend = c("Predicted", "Actual"), col = c("lightblue", "red"), lty = 1)
-}
+
 
 # RMSE  -------------------------------------------------
 rmse.bvar <- function(bvar_sd, test_data) {
@@ -193,7 +191,7 @@ rmse.bvar <- function(bvar_sd, test_data) {
 rmse_bvar <- rmse.bvar(bvar_sd)
 rmse_bvar <- rmse_bvar["p_wheat_log_diff"]
 list(rmse_bvar)
-
+}
 
 
 

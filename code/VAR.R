@@ -79,7 +79,7 @@ merged_data<-data.frame(date,merged_data)
 
 # Selecting which BVAR to run -------------------------------------------
 mm <- T
-sd <- T
+sd <- F
 
 
 # Var for Money managers --------------------------------------------------
