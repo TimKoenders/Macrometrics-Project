@@ -1,4 +1,4 @@
-##################### IRFs and FEVDS of VAR ##################### 
+##################### IRFs and FEVDS of VAR #################
 
 # Clean-up and installing packages--------------
   rm(list = ls())
@@ -54,7 +54,6 @@ plot(data$month, data$netlong_swap, type = "l")
 plot(data$month, data$exports_total, type = "l")
 
 # Transforming the data------------------------------------------
-
 p_wheat_log_diff<-diff(log(data$p_wheat))
 p_oil_log_diff<-diff(log(data$p_oil))
 p_cotton_log_diff<-diff(log(data$p_cotton))               
@@ -65,47 +64,43 @@ ir_log_diff<-diff(log(data$ir))
 cpi_log_diff<-diff(log(data$cpi))
 exports_total_log_diff<-diff(log(data$exports_total))
 netlong_mm <- data$netlong_mm[-1]/100000 # Dividing by 100000 to make numbers comparable to BVAR
-netlong_swap<-data$netlong_swap[-1]/100000 # "" 
+netlong_sd<-data$netlong_swap[-1]/100000 # "" 
 reer_log<-reer_log[-1]
 merged_data<-data.frame(p_wheat_log_diff,p_oil_log_diff,reer_log,ind_prod_log_diff
                    ,sp_log_diff,ir_log_diff,cpi_log_diff,exports_total_log_diff,
-                   netlong_mm,netlong_swap)
+                   netlong_mm,netlong_sd)
 
 date <- data$month[-1]
 merged_data<-data.frame(date,merged_data)
 
 
-# Estimating the VARs------------------------------
-
-##VAR for Money Managers
-df_var_mm<-(data.frame(ind_prod_log_diff,exports_total_log_diff,netlong_mm,p_wheat_log_diff))
-is.na(df_var_mm)
-var_mm<-VAR(na.omit(df_var_mm), lag.max = 10, ic = "AIC", type = "const")
-summary(var_mm)
-coefficients <- coef(var_mm)
-residuals <- resid(var_mm)
-print(coefficients)
-
-##VAR for Swap Dealers
-df_var_sd<-(data.frame(ind_prod_log_diff,exports_total_log_diff,netlong_swap,p_wheat_log_diff))
-is.na(df_var_sd)
-var_sd<-VAR(na.omit(df_var_sd), lag.max = 10, ic = "AIC", type = "const")
-summary(var_sd)
-coefficients <- coef(var_sd)
-residuals <- resid(var_sd)
-print(coefficients)
 
 
-# Plotting the IRFs ------------------------------------------------------
 
-# Computing impulse response functions with recursive-design wild bootstrap for var_mm_w
+# Selecting which BVAR to run -------------------------------------------
+mm <- T
+sd <- T
+
+
+# Var for Money managers --------------------------------------------------
+if (mm==T) {
+  df_var_mm<-(data.frame(ind_prod_log_diff,exports_total_log_diff,netlong_mm,p_wheat_log_diff))
+  is.na(df_var_mm)
+  var_mm<-VAR(na.omit(df_var_mm), lag.max = 10, ic = "AIC", type = "const")
+  summary(var_mm)
+  coefficients <- coef(var_mm)
+  residuals <- resid(var_mm)
+  print(coefficients)
+}
+
+# IRFs --------------------------------------------------------------------
+# Computing impulse response functions with recursive-design wild bootstrap for var_mm
+if (mm==T) {
 set.seed(123) # for reproducibility
 nboot <- 1000 # number of bootstrap replications
-
 irf1 <- vars::irf(var_mm, impulse = "ind_prod_log_diff", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
 irf2 <- vars::irf(var_mm, impulse = "exports_total_log_diff", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
 irf3 <- vars::irf(var_mm, impulse = "netlong_mm", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
-
 par(mfrow = c(3, 1), mar = c(2, 2, 2, 1))
 plot(irf1, ylim = c(-0.04, 0.04), main = "Shock ind_prod_log_diff on p_wheat_log_diff", ylab = "")
 abline(v = seq(1, by = 2), col = "lightgrey", lty = 2)
@@ -116,34 +111,56 @@ axis(1, at = seq(1, by = 2), labels = seq(0, by = 2))
 plot(irf3, ylim = c(-0.03, 0.08), main = "Shock netlong_mm on p_wheat_log_diff", ylab = "")
 abline(v = seq(1, by = 2), col = "lightgrey", lty = 2)
 axis(1, at = seq(1, by = 2), labels = seq(0, by = 2))
+}
 
-
-# Computing impulse response functions with recursive-design wild bootstrap for var_sd_w
-set.seed(123) # for reproducibility
-nboot <- 1000 # number of bootstrap replications
-
-irf4 <- vars::irf(var_sd, impulse = "ind_prod_log_diff", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
-irf5 <- vars::irf(var_sd, impulse = "exports_total_log_diff", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
-irf6 <- vars::irf(var_sd, impulse = "netlong_swap", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
-
-par(mfrow=c(3,1),mar=c(4,4,2,2))
-plot(irf4, ylim = c(-0.04,0.04), main="ind_prod_log_diff on p_wheat_log_diff", ylab="")
-abline(v = seq(1, by = 2), col = "lightgrey", lty = 2)
-axis(1, at = seq(1, by = 2), labels = seq(0, by = 2))
-plot(irf5, ylim = c(-0.04,0.03), main="exports_total_log_diff on p_wheat_log_diff", ylab="")
-abline(v = seq(1, by = 2), col = "lightgrey", lty = 2)
-axis(1, at = seq(1, by = 2), labels = seq(0, by = 2))
-plot(irf6, ylim = c(-0.03,0.03), main="netlong_swap on p_wheat_log_diff", ylab="")
-abline(v = seq(1, by = 2), col = "lightgrey", lty = 2)
-axis(1, at = seq(1, by = 2), labels = seq(0, by = 2))
-
-# FEVDs -----------------------------------
+# FEVDs -------------------------------------------------------------------
+if (mm==T) {
 fevd_mm<-vars::fevd(var_mm)
 print(fevd_mm)
-fevd_sd<-vars::fevd(var_sd)
-print(fevd_sd)
+}
 
 
+
+
+
+
+
+# Var for Swap dealers --------------------------------------------------
+if (sd==T) {
+  df_var_sd<-(data.frame(ind_prod_log_diff,exports_total_log_diff,netlong_sd,p_wheat_log_diff))
+  is.na(df_var_sd)
+  var_sd<-VAR(na.omit(df_var_sd), lag.max = 10, ic = "AIC", type = "const")
+  summary(var_sd)
+  coefficients <- coef(var_sd)
+  residuals <- resid(var_sd)
+  print(coefficients)
+}
+
+# IRFs --------------------------------------------------------------------
+# Computing impulse response functions with recursive-design wild bootstrap for var_mm
+if (sd==T) {
+  set.seed(123) # for reproducibility
+  nboot <- 1000 # number of bootstrap replications
+  irf1 <- vars::irf(var_sd, impulse = "ind_prod_log_diff", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
+  irf2 <- vars::irf(var_sd, impulse = "exports_total_log_diff", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
+  irf3 <- vars::irf(var_sd, impulse = "netlong_sd", response = "p_wheat_log_diff", n.ahead = 12, boot = TRUE, nboot = nboot, ci = 0.95, boot.type = "rdwb")
+  par(mfrow = c(3, 1), mar = c(2, 2, 2, 1))
+  plot(irf1, ylim = c(-0.04, 0.04), main = "Shock ind_prod_log_diff on p_wheat_log_diff", ylab = "")
+  abline(v = seq(1, by = 2), col = "lightgrey", lty = 2)
+  axis(1, at = seq(1, by = 2), labels = seq(0, by = 2))
+  plot(irf2, ylim = c(-0.03, 0.02), main = "Shock exports_total_log_diff on p_wheat_log_diff", ylab = "")
+  abline(v = seq(1, by = 2), col = "lightgrey", lty = 2)
+  axis(1, at = seq(1, by = 2), labels = seq(0, by = 2))
+  plot(irf3, ylim = c(-0.03, 0.08), main = "Shock netlong_sd on p_wheat_log_diff", ylab = "")
+  abline(v = seq(1, by = 2), col = "lightgrey", lty = 2)
+  axis(1, at = seq(1, by = 2), labels = seq(0, by = 2))
+}
+
+# FEVDs -------------------------------------------------------------------
+if (sd==T) {
+  fevd_sd<-vars::fevd(var_sd)
+  print(fevd_sd)
+}
 
 
 
@@ -204,6 +221,7 @@ date <- data$month[-1]
 merged_data<-data.frame(date,merged_data)
 subset_data <- merged_data[merged_data$date >= "2006-06-01" & merged_data$date <= "2012-07-01", ]
 
+
 # Selecting desired VAR #######################
 
 type <- c("mm") # Choose this for Money Managers
@@ -226,9 +244,12 @@ if(type == "sd"){
 
 
 
+
 # Selecting lag-order----------------------------------------------------
 VARselect(VAR_data, lag.max = 12, type = c("const"))
-## The SC criterion is the BIC. 
+## The SC criterion is the BIC.  
+## Care should be taken when using the AIC as it tends to choose large numbers of lags. 
+## Instead, for VAR models, we prefer to use the BIC. Hence optimal lag is 1. 
 # Forecasting -------------------------------------------------------------
 lag_order <- 1
 forecasts_var <- forecast_multivariate(
@@ -256,21 +277,3 @@ plot(actual_values, type = "l", col = "blue", ylim = range(c(actual_values, fore
      xlab = "Time", main="12 Month Wheat Price Forecast (VAR)")
 lines(forecasted_values, col = "red")
 legend("topleft", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1)
-
-
-
-
-
-
-
-# # Theil’s U-statistic -----------------------------------------------------
-# rmse_proposed <- sqrt(mean((forecasted_values - actual_values)^2))
-# rmse_naive <- sqrt(mean((actual_values - mean(actual_values))^2))
-# U_var <- rmse_proposed / rmse_naive
-# print(U_var)
-# #Theil's U-statistic compares the RMSE of the proposed forecasting method 
-# #(rmse_proposed) to the RMSE of the no-change model (rmse_naive).
-# #The value of Theil's U-statistic is less than 1 indicating that the proposed 
-# #forecasting model performs better than the no-change (naïve) model. 
-
-

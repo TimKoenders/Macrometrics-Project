@@ -18,10 +18,6 @@ pacman::p_load(
   forecast
 )
 
-# Selecting which BVAR to run:
-mm <- T
-sd <- F
-
 # Loading data --------------------------------------------
 
 data <- read_excel("./data/data_com_fin.xlsx") 
@@ -55,54 +51,68 @@ merged_data<-data.frame(p_wheat_log_diff,p_oil_log_diff,reer_log,ind_prod_log_di
 date <- data$month[-1]
 merged_data<-data.frame(date,merged_data)
 subset_data <- merged_data[merged_data$date >= "2006-06-01" & merged_data$date <= "2012-07-01", ]
+train_data <- subset_data[1:(nrow(subset_data) - 12), ]
+test_data <- subset_data[(nrow(subset_data) - 11):nrow(subset_data), ]
 
 
 
 
+# Selecting which BVAR to run -------------------------------------------
+mm <- T
+sd <- T
 
 
 
 
-
-
-
-
-# FEVDs for Money managers --------
-set.seed(123)
-
-# FEVDs for Swap dealers --------
-set.seed(123)
-
-
-
-
-
-# BVAR for Money managers -------------------------------------------------
-if (mm==T){
-prior_settings <- bv_priors(hyper = "full")  ## now adjust prior settings
-
+# BVAR for Money Managers -------------------------------------------------
+# IRFs --------------------------------------------------------------------
+if (mm==T) {
+prior_settings <- bv_priors(hyper = "full")  
 set.seed(123)
 df_mm <- data.frame(subset_data[c(5,9,10,2)]) 
 df_mm <- na.omit(df_mm)
 bvar_mm <- bvar(df_mm,
-                lags = 7,
+                lags = 1,
                 priors = prior_settings,  
                 irf = bv_irf(horizon = 12, fevd = TRUE, identification = TRUE, sign_restr = NULL, sign_lim = 1000),
                 fcast = NULL)
-
-# IRFs for Money managers ---------
-# Selecting the three impulse variables and the one response variable
-set.seed(123)
 plot(bvar_mm$irf, 
      vars_impulse = c("ind_prod_log_diff","exports_total_log_diff","netlong_mm"),
      vars_response = "p_wheat_log_diff",
      mfcol=c(3,1))
+}
 
-# RMSE for Money managers -------------------------------------------------
-holdout <- tail(subset_data, 12)
-rmse.bvar <- function(bvar_mm, holdout) {
+# FEVDs -------------------------------------------------------------------
+set.seed(123)
+fevd <- fevd(bvar_mm)
+print(fevd$quants[, , , 4])
+
+# Out-of-sample forecasts ---------------------------------------------------------------
+if (mm==T) {
+    prior_settings <- bv_priors(hyper = "full")  ## now adjust prior settings
+    
+    set.seed(123)
+    df_mm_train <- data.frame(train_data[c(5,9,10,2)]) 
+    df_mm_train <- na.omit(df_mm_train)
+    bvar_mm <- bvar(df_mm_train,
+                    lags = 1,
+                    priors = prior_settings,  
+                    irf = bv_irf(horizon = 12, fevd = TRUE, identification = TRUE, sign_restr = NULL, sign_lim = 1000),
+                    fcast = NULL)
+    df_mm_test <- data.frame(test_data[c(5,9,10,2)]) 
+    df_mm_test <- na.omit(df_mm)
+    forecasts <- predict(bvar_mm, bv_fcast(horizon = NROW(test_data), cond_path = NULL, cond_vars = NULL), conf_bands = 0.025, df_mm_test)
+    par(mfrow=c(1,1))
+    actual_values <- data.frame(df_mm_test[, 4])
+    plot(predict(bvar_mm, horizon = NROW(test_data), conf_bands = 0.025), vars = 4, col = "lightblue",
+         ylim = c(-5, 5)) # Set the y-axis limits to -0.5 and 1
+    lines(actual_values, col = "red")
+    legend("topleft", legend = c("Predicted", "Actual"), col = c("lightblue", "red"), lty = 1)
+}
+# RMSE -------------------------------------------------
+rmse.bvar <- function(bvar_mm, test_data) {
   
-  if(missing(holdout)) { # In-sample
+  if(missing(test_data)) { # In-sample
     apply(resid(bvar_mm, type = "mean"), 2, function(r) sqrt(sum(r^2) / length(r)))
   } else { # Out-of-sample
     fit <- apply(predict(bvar_mm, horizon = NROW(holdout))$fcast, c(2, 3), mean)
@@ -114,54 +124,65 @@ rmse_bvar <- rmse.bvar(bvar_mm)
 rmse_bvar <- rmse_bvar["p_wheat_log_diff"]
 list(rmse_bvar)
 
-# # Theil’s U-statistic for Money managers -----------------------------------------------------
-
- actual_values <- tail(subset_data$p_wheat_log_diff, 12)
-rmse_naive <- sqrt(mean((actual_values - mean(actual_values))^2))
-U_bvar <- rmse_bvar / rmse_naive
-print(U_bvar)
-forecast_values <- apply(predict(bvar_mm, horizon = NROW(holdout))$fcast, c(2, 3), mean)[,4]
-theil <- sqrt(sum((forecast_values-actual_values)^2)/sum(actual_values^2))
-# #Theil's U-statistic compares the RMSE of the proposed forecasting method 
-# #(rmse_proposed) to the RMSE of the no-change model (rmse_naive).
-# #The value of Theil's U-statistic is bigger than 1 indicating that the proposed 
-# #forecasting model performs worse than the no-change (naïve) model. 
 
 
-# Forecast plots for Money managers --------------------------------------------
-par(mfrow=c(1,1))
-plot(predict(bvar_mm, horizon = NROW(holdout),conf_bands = 0.025), vars=4, col="lightblue") #confidence bands at 2.5% and 97.5%
-lines(actual_values, col="red")
 
 
+
+
+# BVAR for Swap dealers ---------------------------------------------------
+# IRFs --------------------------------------------------------------------
+if (sd==T) {
+  prior_settings <- bv_priors(hyper = "full")  
+  set.seed(123)
+  df_sd <- data.frame(subset_data[c(5,9,11,2)]) 
+  df_sd <- na.omit(df_sd)
+  bvar_sd <- bvar(df_sd,
+                  lags = 1,
+                  priors = prior_settings,  
+                  irf = bv_irf(horizon = 12, fevd = TRUE, identification = TRUE, sign_restr = NULL, sign_lim = 1000),
+                  fcast = NULL)
+  plot(bvar_sd$irf, 
+       vars_impulse = c("ind_prod_log_diff","exports_total_log_diff","netlong_sd"),
+       vars_response = "p_wheat_log_diff",
+       mfcol=c(3,1))
 }
-# BVAR for Swap dealers --------------------------
-if (sd==T){
 
-prior_settings <- bv_priors(hyper = "full")  ## now adjust prior settings
-
+# FEVDs -------------------------------------------------------------------
 set.seed(123)
-df_sd <- data.frame(subset_data[c(5,9,11,2)]) 
-df_sd <- na.omit(df_sd)
-bvar_sd <- bvar(df_sd,lags = 7,
-                priors = prior_settings, 
-                irf =  bv_irf(horizon = 12, fevd = TRUE, identification = TRUE, sign_restr = NULL, sign_lim = 1000), 
-                fcast = NULL)
-
-# IRFs Swap dealers --------
-# Selecting the three impulse variables and the one response variable
-set.seed(123)
-plot(bvar_sd$irf,
-     vars_impulse = c("ind_prod_log_diff","exports_total_log_diff","netlong_swap"),
-     vars_response = "p_wheat_log_diff",
-     mfcol=c(3,1))
+fevd <- fevd(bvar_sd)
+print(fevd$quants[, , , 4])
 
 
-# RMSE for Swap dealers -------------------------------------------------
-holdout <- tail(subset_data, 12)
-rmse.bvar <- function(bvar_sd, holdout) {
+# Out-of-sample forecasts ---------------------------------------------------------------
+if (sd==T) {
+  prior_settings <- bv_priors(hyper = "full")  ## now adjust prior settings
   
-  if(missing(holdout)) { # In-sample
+  set.seed(123)
+  df_sd_train <- data.frame(train_data[c(5,9,11,2)]) 
+  df_sd_train <- na.omit(df_sd_train)
+  bvar_sd <- bvar(df_sd_train,
+                  lags = 1,
+                  priors = prior_settings,  
+                  irf = bv_irf(horizon = 12, fevd = TRUE, identification = TRUE, sign_restr = NULL, sign_lim = 1000),
+                  fcast = NULL)
+  df_sd_test <- data.frame(test_data[c(5,9,11,2)]) 
+  df_sd_test <- na.omit(df_sd)
+  forecasts <- predict(bvar_sd, bv_fcast(horizon = NROW(test_data), cond_path = NULL, cond_vars = NULL), conf_bands = 0.025, df_sd_test)
+  par(mfrow=c(1,1))
+  plot(predict(bvar_sd, horizon = NROW(test_data),conf_bands = 0.025), vars=4, col="lightblue") #confidence bands at 2.5% and 97.5%
+  lines(actual_values, col="red")
+  actual_values <- data.frame(df_sd_test[, 4])
+  plot(predict(bvar_sd, horizon = NROW(test_data), conf_bands = 0.025), vars = 4, col = "lightblue",
+       ylim = c(-5, 5)) # Set the y-axis limits to -0.5 and 1
+  lines(actual_values, col = "red")
+  legend("topleft", legend = c("Predicted", "Actual"), col = c("lightblue", "red"), lty = 1)
+}
+
+# RMSE  -------------------------------------------------
+rmse.bvar <- function(bvar_sd, test_data) {
+  
+  if(missing(test_data)) { # In-sample
     apply(resid(bvar_sd, type = "mean"), 2, function(r) sqrt(sum(r^2) / length(r)))
   } else { # Out-of-sample
     fit <- apply(predict(bvar_sd, horizon = NROW(holdout))$fcast, c(2, 3), mean)
@@ -173,20 +194,9 @@ rmse_bvar <- rmse.bvar(bvar_sd)
 rmse_bvar <- rmse_bvar["p_wheat_log_diff"]
 list(rmse_bvar)
 
-# # Theil’s U-statistic for Swap dealers -----------------------------------------------------
-# actual_values <- tail(subset_data$p_wheat_log_diff, 12)
-# rmse_naive <- sqrt(mean((actual_values - mean(actual_values))^2))
-# 
-# U_bvar <- rmse_bvar / rmse_naive
-# print(U_bvar)
-# #Theil's U-statistic compares the RMSE of the proposed forecasting method 
-# #(rmse_proposed) to the RMSE of the no-change model (rmse_naive).
-# #The value of Theil's U-statistic is bigger than 1 indicating that the proposed 
-# #forecasting model performs worse than the no-change (naïve) model. 
 
-# Forecast plot for Swap dealers ----------------------------------------------
-par(mfrow=c(1,1))
-plot(predict(bvar_sd, horizon = NROW(holdout),conf_bands = 0.025), vars=4, col="lightblue") #confidence bands at 2.5% and 97.5%
-lines(actual_values, col="red")
 
-}
+
+
+
+
