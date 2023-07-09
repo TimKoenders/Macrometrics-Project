@@ -78,7 +78,7 @@ bvar_mm <- bvar(df_mm,
                 fcast = NULL)
 plot(bvar_mm$irf, 
      vars_impulse = c("ind_prod_log_diff","exports_total_log_diff","netlong_mm"),
-     vars_response = "p_wheat_log_diff",
+     vars_response = "p_wheat_log_diff",col="lightblue",
      mfcol=c(3,1))
 
 
@@ -103,11 +103,16 @@ if (mm==T) {
     df_mm_test <- na.omit(df_mm_test)
     forecasts <- predict(bvar_mm, bv_fcast(horizon = NROW(test_data), cond_path = NULL, cond_vars = NULL), conf_bands = 0.025, df_mm_test)
     par(mfrow=c(1,1))
-    actual_values <- data.frame(df_mm_test[, 4])
-    plot(predict(bvar_mm, horizon = NROW(test_data), conf_bands = 0.025), vars = 4, col = "lightblue",
-         ylim = c(-5, 5)) # Set the y-axis limits to -0.5 and 1
-    lines(actual_values, col = "red")
-    legend("topleft", legend = c("Predicted", "Actual"), col = c("lightblue", "red"), lty = 1)
+    actual_values <- df_mm_test[, 4]
+    forecasted_values <- predict(bvar_mm, horizon = NROW(test_data))$quants[2,,4]
+    c_low <- predict(bvar_mm, horizon = NROW(test_data))$quants[1,,4] # CI values 
+    c_high <- predict(bvar_mm, horizon = NROW(test_data))$quants[3,,4]
+    plot(actual_values, type = "l", col = "blue", ylim = range(c(actual_values, forecasted_values)),
+         xlab = "Time", main="12 Month Wheat Price Forecast (BVAR)")
+    lines(forecasted_values, col = "red")
+    lines(c_low, col = "lightblue")
+    lines(c_high, col = "lightblue")
+    legend("topleft", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1)
 
 # RMSE -------------------------------------------------
 rmse.bvar <- function(bvar_mm, test_data) {
