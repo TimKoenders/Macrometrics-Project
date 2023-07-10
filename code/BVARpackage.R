@@ -201,7 +201,6 @@ rmse_bvar <- rmse.bvar(bvar_sd)
 rmse_bvar <- rmse_bvar["p_wheat_log_diff"]
 list(rmse_bvar)
 }
-apply(fevd(bvar_mm)$fevd, c(2, 3, 4), mean)
 
 
 
