@@ -84,8 +84,7 @@ plot(bvar_mm$irf,
 
 # FEVDs -------------------------------------------------------------------
 set.seed(123)
-fevd <- fevd(bvar_mm)
-print(fevd$quants[, , , 4])
+apply(fevd(bvar_mm)$fevd, c(2, 3, 4), mean)[,,4]
 }
 # Out-of-sample forecasts ---------------------------------------------------------------
 if (mm==T) {
@@ -197,7 +196,7 @@ rmse_bvar <- rmse.bvar(bvar_sd)
 rmse_bvar <- rmse_bvar["p_wheat_log_diff"]
 list(rmse_bvar)
 }
-
+apply(fevd(bvar_mm)$fevd, c(2, 3, 4), mean)
 
 
 
