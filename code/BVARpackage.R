@@ -15,7 +15,8 @@ pacman::p_load(
   magic,
   coda,
   BVAR,
-  forecast
+  forecast,
+  xtable
 )
 
 # Loading data --------------------------------------------
@@ -88,6 +89,8 @@ fevd_mm <- apply(fevd(bvar_mm)$fevd, c(2, 3, 4), mean)
 fevd_mm_p <- matrix(c(fevd_mm[4,1:12,1],fevd_mm[4,1:12,2],fevd_mm[4,1:12,3],fevd_mm[4,1:12,4]), ncol=4)
 colnames(fevd_mm_p) <- c("ind_prod_log_diff","exports_total_log_diff","netlong_mm", "p_wheat_log_diff")
 print(fevd_mm_p)
+
+print(xtable(fevd_mm_p, type = "latex"), file = "./tables/fevd_bvar_mm.tex")
 }
 # Out-of-sample forecasts ---------------------------------------------------------------
 if (mm==T) {
@@ -161,6 +164,8 @@ set.seed(123)
   fevd_sd_p <- matrix(c(fevd_sd[4,1:12,1],fevd_sd[4,1:12,2],fevd_sd[4,1:12,3],fevd_sd[4,1:12,4]), ncol=4)
   colnames(fevd_sd_p) <- c("ind_prod_log_diff","exports_total_log_diff","netlong_mm", "p_wheat_log_diff")
   print(fevd_sd_p)
+  
+  print(xtable(fevd_sd_p, type = "latex"), file = "./tables/fevd_bvar_sd.tex")
 }
 
 # Out-of-sample forecasts ---------------------------------------------------------------
