@@ -84,7 +84,10 @@ plot(bvar_mm$irf,
 
 # FEVDs -------------------------------------------------------------------
 set.seed(123)
-apply(fevd(bvar_mm)$fevd, c(2, 3, 4), mean)[,,4]
+fevd_mm <- apply(fevd(bvar_mm)$fevd, c(2, 3, 4), mean)
+fevd_mm_p <- matrix(c(fevd_mm[4,1:12,1],fevd_mm[4,1:12,2],fevd_mm[4,1:12,3],fevd_mm[4,1:12,4]), ncol=4)
+colnames(fevd_mm_p) <- c("ind_prod_log_diff","exports_total_log_diff","netlong_mm", "p_wheat_log_diff")
+print(fevd_mm_p)
 }
 # Out-of-sample forecasts ---------------------------------------------------------------
 if (mm==T) {
@@ -154,8 +157,10 @@ if (sd==T) {
 
 # FEVDs -------------------------------------------------------------------
 set.seed(123)
-fevd <- fevd(bvar_sd)
-print(fevd$quants[, , , 4])
+  fevd_sd <- apply(fevd(bvar_sd)$fevd, c(2, 3, 4), mean)
+  fevd_sd_p <- matrix(c(fevd_sd[4,1:12,1],fevd_sd[4,1:12,2],fevd_sd[4,1:12,3],fevd_sd[4,1:12,4]), ncol=4)
+  colnames(fevd_sd_p) <- c("ind_prod_log_diff","exports_total_log_diff","netlong_mm", "p_wheat_log_diff")
+  print(fevd_sd_p)
 }
 
 # Out-of-sample forecasts ---------------------------------------------------------------
