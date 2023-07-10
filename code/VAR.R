@@ -13,7 +13,8 @@ pacman::p_load(
   vars,
   dplyr,
   OOS,
-  forecast
+  forecast,
+  xtable
 )
 
 # Read Data ------------------------------------------------------------
@@ -117,6 +118,8 @@ axis(1, at = seq(1, by = 2), labels = seq(0, by = 2))
 if (mm==T) {
 fevd_mm<-vars::fevd(var_mm)
 print(fevd_mm)
+
+print(xtable(fevd_mm$p_wheat_log_diff, type = "latex"), file = "./tables/fevd_var_mm.tex")
 }
 
 
@@ -160,6 +163,7 @@ if (sd==T) {
 if (sd==T) {
   fevd_sd<-vars::fevd(var_sd)
   print(fevd_sd)
+  print(xtable(fevd_sd$p_wheat_log_diff, type = "latex"), file = "./tables/fevd_var_sd.tex")
 }
 
 
