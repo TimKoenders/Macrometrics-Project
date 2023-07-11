@@ -27,7 +27,7 @@ data$month <- ym(data$month, quiet = FALSE, tz = NULL, locale = Sys.getlocale("L
 
 
 # Data inspection------------------------------------------------------------
-section_data <- data[data$month >= as.Date("2006-06-01") & data$month <= as.Date("2012-10-31"), ]
+section_data <- data[data$month >= as.Date("2006-06-01") & data$month <= as.Date("2012-07-01"), ]
 summary(section_data$p_wheat)
 summary(section_data$p_wheat_2)
 summary(section_data$p_oil)
@@ -40,6 +40,16 @@ summary(section_data$cpi)
 summary(section_data$netlong_mm)
 summary(section_data$netlong_swap)
 summary(section_data$exports_total)
+
+# Unit root tests ---------------------------------------------------------
+test1 = ur.df(section_data$p_wheat, type = "drift", selectlags = "BIC")
+summary(test1) #p_wheat is non-stationary
+test2 = ur.df(section_data$ind_prod, type = "drift", selectlags = "BIC")
+summary(test2) #ind_prod is non-stationary
+test3 = ur.df(section_data$netlong_mm, type = "drift", selectlags = "BIC")
+summary(test3) #netlong_mm is stationary
+test4 = ur.df(section_data$exports_total, type = "drift", selectlags = "BIC")
+summary(test4) 
 
 #plotting time series
 plot(data$month, data$p_wheat, type = "l")
@@ -78,9 +88,12 @@ merged_data<-data.frame(date,merged_data)
 
 
 
+
 # Selecting which BVAR to run -------------------------------------------
 mm <- T
 sd <- F
+
+
 
 
 # Var for Money managers --------------------------------------------------
@@ -176,6 +189,7 @@ if (sd==T) {
 
 
 
+
 ##################### Forecasting VAR ######################
 
 # Loading data --------------------------------------------
@@ -247,13 +261,12 @@ if(type == "sd"){
 }
 
 
-
-
 # Selecting lag-order----------------------------------------------------
 VARselect(VAR_data, lag.max = 12, type = c("const"))
 ## The SC criterion is the BIC.  
 ## Care should be taken when using the AIC as it tends to choose large numbers of lags. 
 ## Instead, for VAR models, we prefer to use the BIC. Hence optimal lag is 1. 
+
 # Forecasting -------------------------------------------------------------
 lag_order <- 1
 forecasts_var <- forecast_multivariate(
