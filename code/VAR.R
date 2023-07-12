@@ -109,8 +109,8 @@ plot(data$month, data$exports_total, type = "l")
 
 # Selecting desired VAR #######################
 
-type <- c("mm") # Choose this for Money Managers small-scale
-#type <- c("mm_medium") # Choose this for Money Managers medium-scale
+#type <- c("mm") # Choose this for Money Managers small-scale
+type <- c("mm_medium") # Choose this for Money Managers medium-scale
 #type <- c("sd") # Choose this for Swap Dealers
 if(type == "mm") {
   df <- data.frame(subset_data[c(1,5,9,10,2)]) 
@@ -148,6 +148,8 @@ VARselect(VAR_data, lag.max = 12, type = c("const"))
 ## The SC criterion is the BIC.  
 ## Care should be taken when using the AIC as it tends to choose large numbers of lags. 
 ## Instead, for VAR models, we prefer to use the BIC. Hence optimal lag is 1. 
+
+
 
 
 
@@ -202,12 +204,11 @@ print(xtable(fevd_mm$p_wheat_log_diff, type = "latex"), file = "./tables/fevd_va
 if (type=="mm_medium") {
   df_var_mm <- data.frame(subset_data[c(5,9,10,3,2,7,6,4)]) 
   is.na(df_var_mm)
-  var_mm<-VAR(na.omit(df_var_mm), lag.max = 1, ic = "SC", type = "const")
+  var_mm<-VAR(df_var_mm, p=1, type = "const")
   coefficients <- coef(var_mm)
   residuals <- resid(var_mm)
   print(coefficients)
 }
-
 # IRFs --------------------------------------------------------------------
 # Computing impulse response functions with recursive-design wild bootstrap for var_mm
 if (type=="mm_medium") {
@@ -251,6 +252,9 @@ if (type=="mm_medium") {
   
   print(xtable(fevd_mm$p_wheat_log_diff, type = "latex"), file = "./tables/fevd_var_mm.tex")
 }
+
+
+
 
 
 
@@ -328,8 +332,6 @@ plot(actual_values, type = "l", col = "blue", ylim = range(c(actual_values, fore
      xlab = "Time", main="12 Month Wheat Price Forecast (VAR)")
 lines(forecasted_values, col = "red")
 legend("topleft", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1)
-
-
 
 
 # Forecasting medium-scale VAR-------------------------------------------------------------
