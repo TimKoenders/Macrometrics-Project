@@ -54,7 +54,7 @@ ir <-data$ir
 cpi_log_diff<-diff(log(data$cpi))
 exports_log<-log(data$exports_total)
 netlong_mm <- data$netlong_mm[-1]/100000 # Dividing by 100000 to make numbers comparable to BVAR
-netlong_sd<-data$netlong_swap[-1]/100000 # "" 
+netlong_sd<-data$netlong_swap[-1]/10000 # "" 
 reer_log<-reer_log[-1]
 ir <- ir[-1]
 ir <- ir/100
@@ -75,15 +75,131 @@ test_data <- subset_data[(nrow(subset_data) - 11):nrow(subset_data), ]
 
 
 
+
+
 # Selecting which BVAR to run -------------------------------------------
 #mm <- T
 mm_medium <- T
 #sd <- F
 
+
+# Prior settings For Flat-prior small-scale VAR ----------------------------------------------------------
+?bv_priors
+lamda <- bv_lambda(mode = 500 , sd = 0.4, min = 0.0001, max = 1000)
+alpha <- bv_alpha(mode = 2, sd = 0.25, min = 1, max = 3)
+psi <- bv_psi(scale = 0.004, shape = 0.004, mode = "auto", min = "auto", max = "auto")
+var = 10000000
+b=c(0,1,1,0)
+
+prior_settings <- bv_priors(hyper = "full", bv_minnesota(lamda, alpha, psi, var, b))  
+
+
+  
+
+# Prior settings For Weakly-informative-prior small-scale VAR ----------------------------------------------------------
+?bv_priors
+lamda <- bv_lambda(mode = 0.6 , sd = 0.4, min = 0.0001, max = 1000)
+alpha <- bv_alpha(mode = 2, sd = 0.25, min = 1, max = 3)
+psi <- bv_psi(scale = 0.004, shape = 0.004, mode = "auto", min = "auto", max = "auto")
+var = 10000000
+b=c(0,1,1,0)
+
+prior_settings <- bv_priors(hyper = "full", bv_minnesota(lamda, alpha, psi, var, b))  
+
+
+
+
+
+
+
+
+
+
+# Prior settings For Strongly-informative-prior small-scale VAR ----------------------------------------------------------
+?bv_priors
+lamda <- bv_lambda(mode = 0.1, sd = 0.2, min = 0.0001, max = 1000)
+alpha <- bv_alpha(mode = 2, sd = 0.25, min = 1, max = 3)
+psi <- bv_psi(scale = 0.004, shape = 0.004, mode = "auto", min = "auto", max = "auto")
+var = 10000000
+b=c(0,1,1,0)
+
+prior_settings <- bv_priors(hyper = "full", bv_minnesota(lamda, alpha, psi, var, b))  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Prior settings For Flat-prior medium-scale VAR ----------------------------------------------------------
+?bv_priors
+lamda <- bv_lambda(mode = 500 , sd = 0.4, min = 0.0001, max = 1000)
+alpha <- bv_alpha(mode = 2, sd = 0.25, min = 1, max = 3)
+psi <- bv_psi(scale = 0.004, shape = 0.004, mode = "auto", min = "auto", max = "auto")
+var = 10000000
+b=c(0,1,1,0,0,1,0,1)
+
+prior_settings <- bv_priors(hyper = "full", bv_minnesota(lamda, alpha, psi, var, b))  
+
+# Prior settings For Weakly-informative-prior medium-scale VAR ----------------------------------------------------------
+?bv_priors
+lamda <- bv_lambda(mode = 0.6 , sd = 0.4, min = 0.0001, max = 1000)
+alpha <- bv_alpha(mode = 2, sd = 0.25, min = 1, max = 3)
+psi <- bv_psi(scale = 0.004, shape = 0.004, mode = "auto", min = "auto", max = "auto")
+var = 10000000
+b=c(0,1,1,0,0,1,0,1)
+
+prior_settings <- bv_priors(hyper = "full", bv_minnesota(lamda, alpha, psi, var, b))  
+
+
+
+
+
+
+
+
+
+
+# Prior settings For Strongly-informative-prior medium-scale VAR ----------------------------------------------------------
+?bv_priors
+lamda <- bv_lambda(mode = 0.1, sd = 0.4, min = 0.0001, max = 1000)
+alpha <- bv_alpha(mode = 2, sd = 0.25, min = 1, max = 3)
+psi <- bv_psi(scale = 0.004, shape = 0.004, mode = "auto", min = "auto", max = "auto")
+var = 10000000
+b=c(0,1,1,0,0,1,0,1)
+
+prior_settings <- bv_priors(hyper = "full",bv_minnesota(lamda, alpha, psi, var, b))  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # BVAR for Money Managers small-scale -------------------------------------------------
 # IRFs and FEVDs --------------------------------------------------------------------
 if (mm==T) {
-prior_settings <- bv_priors(hyper = "full")  
 set.seed(123)
 df_mm <- data.frame(subset_data[c(5,9,10,2)]) 
 df_mm <- na.omit(df_mm)
@@ -109,8 +225,6 @@ print(xtable(fevd_mm_p, type = "latex"), file = "./tables/fevd_bvar_mm.tex")
 }
 # Out-of-sample forecasts ---------------------------------------------------------------
 if (mm==T) {
-    prior_settings <- bv_priors(hyper = "full")  ## now adjust prior settings
-    
     set.seed(123)
     df_mm_train <- data.frame(train_data[c(5,9,10,2)]) 
     df_mm_train <- na.omit(df_mm_train)
@@ -161,10 +275,17 @@ list(rmse_bvar)
 
 
 
+
+
+
+
+
+
+
+
 # BVAR for Money Managers medium-scale -------------------------------------------------
 # IRFs and FEVDs --------------------------------------------------------------------
 if (mm_medium==T) {
-  prior_settings <- bv_priors(hyper = "full")  
   set.seed(123)
   df_mm <- data.frame(subset_data[c(5,9,10,3,2,7,6,4)])
   is.na(df_mm)
@@ -198,7 +319,6 @@ summary(bvar_mm$irf)
 }
 # Out-of-sample forecasts ---------------------------------------------------------------
 if (mm_medium==T) {
-  prior_settings <- bv_priors(hyper = "full")  ## now adjust prior settings
   set.seed(123)
   df_mm_train <- data.frame(train_data[c(5,9,10,3,2,7,6,4)]) 
   is.na(df_mm_train) 
@@ -207,7 +327,7 @@ if (mm_medium==T) {
                   priors = prior_settings,  
                   irf = bv_irf(horizon = 12, fevd = TRUE, identification = TRUE, sign_restr = NULL, sign_lim = 1000),
                   fcast = NULL)
-  df_mm_test <- data.frame(test_data[c(5,9,10,3,2,7,6,4)]) 
+  df_mm_test <- data.frame(test_data[c(5,9,10,3,2,7,4,6)]) 
   df_mm_test <- na.omit(df_mm_test)
   forecasts <- predict(bvar_mm, bv_fcast(horizon = NROW(test_data), cond_path = NULL, cond_vars = NULL), conf_bands = 0.025, df_mm_test)
   par(mfrow=c(1,1))
@@ -237,6 +357,18 @@ if (mm_medium==T) {
   rmse_bvar <- rmse_bvar["p_wheat_log_diff"]
   list(rmse_bvar)
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
