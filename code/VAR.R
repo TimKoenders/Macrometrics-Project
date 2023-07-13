@@ -1,8 +1,7 @@
 ##################### IRFs and FEVDS of VAR #################
 
-# Clean-up and installing packages--------------
-  rm(list = ls())
-gc()
+# Setup --------------------
+rm(list=ls())
 
 pacman::p_load(
   tidyverse,
@@ -12,7 +11,10 @@ pacman::p_load(
   lubridate,
   vars,
   dplyr,
-  OOS,
+  MCMCpack,
+  magic,
+  coda,
+  BVAR,
   forecast,
   xtable
 )
@@ -52,18 +54,21 @@ ir <-data$ir
 cpi_log_diff<-diff(log(data$cpi))
 exports_log<-log(data$exports_total)
 netlong_mm <- data$netlong_mm[-1]/100000 # Dividing by 100000 to make numbers comparable to BVAR
-netlong_sd<-data$netlong_swap[-1]/100000 # "" 
+netlong_sd<-log(data$netlong_swap[-1])/100000 # "" 
 reer_log<-reer_log[-1]
 ir <- ir[-1]
 ir <- ir/100
 exports_log <- exports_log[-1]
 merged_data<-data.frame(p_wheat_log_diff,p_oil_log_diff,reer_log,ind_prod_log_diff
-                   ,sp_log_diff,ir,cpi_log_diff,exports_log,
-                   netlong_mm,netlong_sd)
+                        ,sp_log_diff,ir,cpi_log_diff,exports_log,
+                        netlong_mm,netlong_sd)
 
 date <- data$month[-1]
 merged_data<-data.frame(date,merged_data)
 subset_data <- merged_data[merged_data$date >= "2006-06-01" & merged_data$date <= "2012-07-01", ]
+
+
+
 
 
 
@@ -109,8 +114,8 @@ plot(data$month, data$exports_total, type = "l")
 
 # Selecting desired VAR #######################
 
-#type <- c("mm") # Choose this for Money Managers small-scale
-type <- c("mm_medium") # Choose this for Money Managers medium-scale
+type <- c("mm") # Choose this for Money Managers small-scale
+#type <- c("mm_medium") # Choose this for Money Managers medium-scale
 #type <- c("sd") # Choose this for Swap Dealers
 if(type == "mm") {
   df <- data.frame(subset_data[c(1,5,9,10,2)]) 
@@ -143,6 +148,7 @@ if(type == "sd"){
 
 
 
+
 # Selecting lag-order----------------------------------------------------
 VARselect(VAR_data, lag.max = 12, type = c("const"))
 ## The SC criterion is the BIC.  
@@ -155,7 +161,7 @@ VARselect(VAR_data, lag.max = 12, type = c("const"))
 
 # Small-scale Var for Money managers --------------------------------------------------
 if (type=="mm") {
-  var_mm<-VAR(na.omit(VAR_data), lag.max = 1, ic = "SC", type = "const")
+  var_mm<-VAR(na.omit(VAR_data), p=1, "const")
   summary(var_mm)
   coefficients <- coef(var_mm)
   residuals <- resid(var_mm)
