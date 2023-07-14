@@ -54,7 +54,7 @@ ir <-data$ir
 cpi_log_diff<-diff(log(data$cpi))
 exports_log<-log(data$exports_total)
 netlong_mm <- data$netlong_mm[-1]/100000 # Dividing by 100000 to make numbers comparable to BVAR
-netlong_sd<-data$netlong_swap[-1]/10000 # "" 
+netlong_sd<-data$netlong_swap[-1]/100000 # "" 
 reer_log<-reer_log[-1]
 ir <- ir[-1]
 ir <- ir/100
@@ -66,13 +66,10 @@ merged_data<-data.frame(p_wheat_log_diff,p_oil_log_diff,reer_log,ind_prod_log_di
 date <- data$month[-1]
 merged_data<-data.frame(date,merged_data)
 subset_data <- merged_data[merged_data$date >= "2006-06-01" & merged_data$date <= "2012-07-01", ]
-train_data <- subset_data[1:(nrow(subset_data) - 12), ]
-test_data <- subset_data[(nrow(subset_data) - 11):nrow(subset_data), ]
-
-
-
-
-
+#train_data <- subset_data[1:(nrow(subset_data) - 12), ]
+#test_data <- subset_data[(nrow(subset_data) - 11):nrow(subset_data), ]
+train_data <- subset_data[1:(nrow(subset_data) - 13), ]
+test_data <- subset_data[(nrow(subset_data) - 12):(nrow(subset_data) - 1), ]
 
 
 
@@ -80,12 +77,12 @@ test_data <- subset_data[(nrow(subset_data) - 11):nrow(subset_data), ]
 # Selecting which BVAR to run -------------------------------------------
 #mm <- T
 mm_medium <- T
-#sd <- F
+#sd <- T
 
 
 # Prior settings For Flat-prior small-scale VAR ----------------------------------------------------------
 ?bv_priors
-lamda <- bv_lambda(mode = 500 , sd = 0.4, min = 0.0001, max = 1000)
+lamda <- bv_lambda(mode = 500, sd = 10, min = 0.0001, max = 1000)
 alpha <- bv_alpha(mode = 2, sd = 0.25, min = 1, max = 3)
 psi <- bv_psi(scale = 0.004, shape = 0.004, mode = "auto", min = "auto", max = "auto")
 var = 10000000
@@ -96,35 +93,10 @@ prior_settings <- bv_priors(hyper = "full", bv_minnesota(lamda, alpha, psi, var,
 
   
 
-# Prior settings For Weakly-informative-prior small-scale VAR ----------------------------------------------------------
-?bv_priors
-lamda <- bv_lambda(mode = 0.6 , sd = 0.4, min = 0.0001, max = 1000)
-alpha <- bv_alpha(mode = 2, sd = 0.25, min = 1, max = 3)
-psi <- bv_psi(scale = 0.004, shape = 0.004, mode = "auto", min = "auto", max = "auto")
-var = 10000000
+# Prior settings For informative-prior small-scale VAR ----------------------------------------------------------
+
 b=c(0,1,1,0)
-
-prior_settings <- bv_priors(hyper = "full", bv_minnesota(lamda, alpha, psi, var, b))  
-
-
-
-
-
-
-
-
-
-
-# Prior settings For Strongly-informative-prior small-scale VAR ----------------------------------------------------------
-?bv_priors
-lamda <- bv_lambda(mode = 0.1, sd = 0.2, min = 0.0001, max = 1000)
-alpha <- bv_alpha(mode = 2, sd = 0.25, min = 1, max = 3)
-psi <- bv_psi(scale = 0.004, shape = 0.004, mode = "auto", min = "auto", max = "auto")
-var = 10000000
-b=c(0,1,1,0)
-
-prior_settings <- bv_priors(hyper = "full", bv_minnesota(lamda, alpha, psi, var, b))  
-
+prior_settings <- bv_priors(hyper = "full")  
 
 
 
@@ -140,53 +112,17 @@ prior_settings <- bv_priors(hyper = "full", bv_minnesota(lamda, alpha, psi, var,
 
 # Prior settings For Flat-prior medium-scale VAR ----------------------------------------------------------
 ?bv_priors
-lamda <- bv_lambda(mode = 500 , sd = 0.4, min = 0.0001, max = 1000)
-alpha <- bv_alpha(mode = 2, sd = 0.25, min = 1, max = 3)
+lamda <- bv_lambda(mode = 100, sd = 10, min = 0.0001, max = 1000)
+alpha <- bv_alpha(mode = 0.05, sd = 0.0025, min = 1, max = 3)
 psi <- bv_psi(scale = 0.004, shape = 0.004, mode = "auto", min = "auto", max = "auto")
 var = 10000000
 b=c(0,1,1,0,0,1,0,1)
 
 prior_settings <- bv_priors(hyper = "full", bv_minnesota(lamda, alpha, psi, var, b))  
 
-# Prior settings For Weakly-informative-prior medium-scale VAR ----------------------------------------------------------
-?bv_priors
-lamda <- bv_lambda(mode = 0.6 , sd = 0.4, min = 0.0001, max = 1000)
-alpha <- bv_alpha(mode = 2, sd = 0.25, min = 1, max = 3)
-psi <- bv_psi(scale = 0.004, shape = 0.004, mode = "auto", min = "auto", max = "auto")
-var = 10000000
-b=c(0,1,1,0,0,1,0,1)
-
-prior_settings <- bv_priors(hyper = "full", bv_minnesota(lamda, alpha, psi, var, b))  
-
-
-
-
-
-
-
-
-
-
-# Prior settings For Strongly-informative-prior medium-scale VAR ----------------------------------------------------------
-?bv_priors
-lamda <- bv_lambda(mode = 0.1, sd = 0.4, min = 0.0001, max = 1000)
-alpha <- bv_alpha(mode = 2, sd = 0.25, min = 1, max = 3)
-psi <- bv_psi(scale = 0.004, shape = 0.004, mode = "auto", min = "auto", max = "auto")
-var = 10000000
-b=c(0,1,1,0,0,1,0,1)
-
-prior_settings <- bv_priors(hyper = "full",bv_minnesota(lamda, alpha, psi, var, b))  
-
-
-
-
-
-
-
-
-
-
-
+# Prior settings For informative-prior medium-scale VAR ----------------------------------------------------------
+prior_settings <-bv_priors(hyper = "full")
+b=c(0,1,1,4,0,1,0,1)
 
 
 
@@ -229,9 +165,9 @@ if (mm==T) {
     df_mm_train <- data.frame(train_data[c(5,9,10,2)]) 
     df_mm_train <- na.omit(df_mm_train)
     bvar_mm <- bvar(df_mm_train,
-                    lags = 1,
+                    lags = 1, n_draw = 600L, n_burn = 100L, verbose = FALSE, 
                     priors = prior_settings,  
-                    irf = bv_irf(horizon = 12, fevd = TRUE, identification = TRUE, sign_restr = NULL, sign_lim = 1000),
+                    irf = bv_irf(horizon = 6, fevd = TRUE, identification = TRUE, sign_restr = NULL, sign_lim = 1000),
                     fcast = NULL)
     df_mm_test <- data.frame(test_data[c(5,9,10,2)]) 
     df_mm_test <- na.omit(df_mm_test)
@@ -249,20 +185,56 @@ if (mm==T) {
     legend("topleft", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1)
 
 # RMSE -------------------------------------------------
-rmse.bvar <- function(bvar_mm, test_data) {
+    
+rmse.bvar <- function(bvar_mm, df_mm_test) {
   
-  if(missing(test_data)) { # In-sample
+  if(missing(df_mm_test)) { # In-sample
     apply(resid(bvar_mm, type = "mean"), 2, function(r) sqrt(sum(r^2) / length(r)))
   } else { # Out-of-sample
-    fit <- apply(predict(bvar_mm, horizon = NROW(holdout))$fcast, c(2, 3), mean)
-    err <- fit - holdout
+    fit <- apply(predict(bvar_mm, horizon = NROW(df_mm_test))$fcast, c(2, 3), mean)
+    err <- fit - df_mm_test
     apply(err, 2, function(r) sqrt(sum(r^2) / length(r)))
   }
 }
 rmse_bvar <- rmse.bvar(bvar_mm)
-rmse_bvar <- rmse_bvar["p_wheat_log_diff"]
 list(rmse_bvar)
 }
+
+
+# LPS ---------------------------------------------------------------------
+
+
+
+n_draw <- 600L
+n_burn <- 100L
+
+lps.bvar <- function(bvar_mm, df_mm_test, n_thin = 1L) {  
+  n_pres <- bvar_mm[["meta"]][["n_save"]]
+  n_thin <- int_check(n_thin, min = 1, max = (n_draw - n_burn) / 10)
+  n_save <- int_check((n_pres / n_thin), min = 1)
+  
+  fit <- predict(bvar_mm, horizon = NROW(df_mm_test))$fcast
+  Y <- df_mm_test
+  
+  mu <- apply(fit, c(2, 3), mean)
+  sd <- apply(fit, c(2, 3), sd)
+  lps <- matrix(NA, NROW(mu), NCOL(mu))
+  for(j in seq_len(ncol(lps))) {
+    lps[, j] <- dnorm(Y[, j] - mu[, j], sd = sd[, j], log = TRUE)
+  }
+  
+  return(lps)
+}
+
+lps.bvar <- lps.bvar(bvar_mm)
+
+
+
+
+
+
+
+
 
 
 
@@ -327,11 +299,10 @@ if (mm_medium==T) {
                   priors = prior_settings,  
                   irf = bv_irf(horizon = 12, fevd = TRUE, identification = TRUE, sign_restr = NULL, sign_lim = 1000),
                   fcast = NULL)
-  df_mm_test <- data.frame(test_data[c(5,9,10,3,2,7,4,6)]) 
+  df_mm_test <- data.frame(test_data[c(5,9,10,3,2,7,6,4)]) 
   df_mm_test <- na.omit(df_mm_test)
-  forecasts <- predict(bvar_mm, bv_fcast(horizon = NROW(test_data), cond_path = NULL, cond_vars = NULL), conf_bands = 0.025, df_mm_test)
   par(mfrow=c(1,1))
-  actual_values <- df_mm_test[, 4]
+  actual_values <- df_mm_test[, 5]
   forecasted_values <- predict(bvar_mm, horizon = NROW(test_data))$quants[2,,4]
   c_low <- predict(bvar_mm, horizon = NROW(test_data))$quants[1,,4] # CI values 
   c_high <- predict(bvar_mm, horizon = NROW(test_data))$quants[3,,4]
@@ -343,18 +314,17 @@ if (mm_medium==T) {
   legend("topleft", legend = c("Actual", "Forecast"), col = c("blue", "red"), lty = 1)
   
   # RMSE -------------------------------------------------
-  rmse.bvar <- function(bvar_mm, test_data) {
+  rmse.bvar <- function(bvar_mm, df_mm_test) {
     
-    if(missing(test_data)) { # In-sample
+    if(missing(df_mm_test)) { # In-sample
       apply(resid(bvar_mm, type = "mean"), 2, function(r) sqrt(sum(r^2) / length(r)))
     } else { # Out-of-sample
       fit <- apply(predict(bvar_mm, horizon = NROW(test_data))$fcast, c(2, 3), mean)
-      err <- fit - test_data
+      err <- fit - df_mm_test
       apply(err, 2, function(r) sqrt(sum(r^2) / length(r)))
     }
   }
   rmse_bvar <- rmse.bvar(bvar_mm)
-  rmse_bvar <- rmse_bvar["p_wheat_log_diff"]
   list(rmse_bvar)
 }
 
@@ -378,6 +348,40 @@ if (mm_medium==T) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# AR forecasting for Money Managers---------------------------------------
+  set.seed(123)
+  df_ar <- data.frame(train_data[2])  
+  df_ar <- na.omit(df_ar)
+  
+  AR <- arima(df_ar, order = c(1,0,0))
+  print(AR)
+  forecasted_values <- predict(AR, n.ahead = 12)
+  accuracy(AR)
+
+
+
+
+
+
+
+  
+  
 # BVAR for Swap dealers ---------------------------------------------------
 # IRFs and FEVDs --------------------------------------------------------------------
 if (sd==T) {
